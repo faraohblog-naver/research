@@ -63,8 +63,9 @@ th:first-child,td:first-child{text-align:left;white-space:normal;}
 th{font-size:12px;color:#5A7A9A;}
 .bar{height:6px;background:var(--brand-2);border-radius:3px;margin-top:4px;}
 .cprod{background:#fff;border:1px solid #D1DCE8;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
-.cprod .thumb{aspect-ratio:1/1;background:#F7FAFC;display:flex;align-items:center;justify-content:center;}
+.cprod .thumb{position:relative;aspect-ratio:1/1;background:#F7FAFC;display:flex;align-items:center;justify-content:center;}
 .cprod .thumb img{width:100%;height:100%;object-fit:contain;display:block;}
+.cprod .rankBadge{position:absolute;left:6px;top:6px;background:var(--brand-1);color:#fff;font-size:11px;font-weight:800;padding:2px 6px;border-radius:4px;}
 .cprod .body{padding:8px 10px;flex:1;display:flex;flex-direction:column;gap:4px;}
 .cprod .ttl{font-size:13px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .cprod .price{font-size:17px;font-weight:800;color:var(--brand-1);}
@@ -109,6 +110,7 @@ th{font-size:12px;color:#5A7A9A;}
     <div id="coupangInput" class="hidden">
       <div class="flbl">쿠팡 검색어 (상품명, 카테고리)</div>
       <input id="coupangKeyword" class="f" placeholder="예: 무선 청소기"/>
+      <div class="hint">쿠팡이 매기는 순위(rank) 순으로 보여줍니다. 실제 판매횟수는 아니지만, 쿠팡 검색 노출 순서라 인기 있는 상품이 앞쪽에 오는 경향이 있습니다.</div>
     </div>
     <div class="chips" id="presets"></div>
 
@@ -401,9 +403,11 @@ async function runCoupang(){
   const data = await res.json().catch(() => null);
   if(!res.ok || !data || !data.ok) throw new Error((data && data.error) || 'HTTP ' + res.status);
 
-  $('coupangList').innerHTML = data.items.length ? data.items.map(p => `<div class="cprod">
+  const items = [...data.items].sort((a,b) => (a.rank ?? 999) - (b.rank ?? 999));
+  $('coupangList').innerHTML = items.length ? items.map(p => `<div class="cprod">
     <a class="thumb" href="${esc(p.url)}" target="_blank" rel="noopener nofollow">
       ${p.image ? `<img src="${esc(p.image)}" loading="lazy" alt=""/>` : ''}
+      ${p.rank ? `<span class="rankBadge">#${p.rank}</span>` : ''}
     </a>
     <div class="body">
       ${p.isRocket ? '<span class="rocket">🚀 로켓배송</span>' : ''}
